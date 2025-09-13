@@ -1,0 +1,123 @@
+services:
+  - type: web
+    name: ceramic-armor-ml-api
+    env: python
+    runtime: python-3.10
+    buildCommand: |
+      pip install --upgrade pip &&
+      pip install -r requirements.txt &&
+      python -c "import src.api.main; print('Build validation successful')"
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT --workers 1 --timeout-keep-alive 30
+    
+    # Environment Variables
+    envVars:
+      # Application Configuration
+      - key: APP_NAME
+        value: Ceramic Armor ML API
+      - key: APP_VERSION
+        value: 1.0.0
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      
+      # Server Configuration
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        fromService:
+          type: web
+          name: ceramic-armor-ml-api
+          property: port
+      
+      # API Configuration
+      - key: API_V1_PREFIX
+        value: /api/v1
+      
+      # External API Keys (sync: false means these are set manually in Render dashboard)
+      - key: MATERIALS_PROJECT_API_KEY
+        sync: false
+      - key: NIST_API_KEY
+        sync: false
+      
+      # CORS Configuration
+      - key: CORS_ORIGINS
+        value: https://ceramic-armor-ml-api.onrender.com,https://www.ceramic-armor-ml-api.onrender.com
+      - key: CORS_ALLOW_CREDENTIALS
+        value: true
+      - key: CORS_ALLOW_METHODS
+        value: GET,POST,PUT,DELETE,OPTIONS
+      - key: CORS_ALLOW_HEADERS
+        value: "*"
+      
+      # Rate Limiting Configuration
+      - key: RATE_LIMIT_REQUESTS
+        value: 100
+      - key: RATE_LIMIT_WINDOW
+        value: 3600
+      
+      # Security Configuration
+      - key: ENABLE_SECURITY_HEADERS
+        value: true
+      - key: ENABLE_INPUT_SANITIZATION
+        value: true
+      - key: MAX_REQUEST_SIZE
+        value: 10485760
+      
+      # Logging Configuration
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FORMAT
+        value: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      
+      # Model Configuration
+      - key: MODEL_CACHE_SIZE
+        value: 10
+      - key: MODEL_PATH
+        value: models/
+      
+      # File Upload Configuration
+      - key: MAX_FILE_SIZE
+        value: 10485760
+      - key: ALLOWED_FILE_TYPES
+        value: .csv,.xlsx,.json
+    
+    # Health Check Configuration
+    healthCheckPath: /health
+    
+    # Auto-deployment Configuration
+    autoDeploy: true
+    
+    # Resource Configuration
+    plan: starter  # Can be upgraded to standard or pro based on needs
+    
+    # Persistent Disk for ML Models
+    disk:
+      name: ceramic-armor-ml-models
+      mountPath: /opt/render/project/models
+      sizeGB: 2  # Increased for ML model storage
+    
+    # Build Configuration
+    buildFilter:
+      paths:
+        - src/**
+        - requirements.txt
+        - render.yaml
+        - models/**
+      ignoredPaths:
+        - tests/**
+        - notebooks/**
+        - docs/**
+        - .git/**
+        - __pycache__/**
+        - "*.pyc"
+    
+    # Runtime Configuration
+    numInstances: 1  # Start with 1, can be scaled up
+    
+    # Scaling Configuration (for paid plans)
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetMemoryPercent: 70
+      targetCPUPercent: 70

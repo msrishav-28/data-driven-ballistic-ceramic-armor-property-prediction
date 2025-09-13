@@ -1,0 +1,11 @@
+SiC,B4C,Al2O3,WC,TiC,sintering_temperature,pressure,grain_size,holding_time,heating_rate,atmosphere,porosity,phase_distribution,interface_quality,pore_size,connectivity
+0.6,0.3,0.1,0.0,0.0,1800,50,10,120,15,argon,0.02,uniform,good,1.0,0.1
+0.7,0.2,0.1,0.0,0.0,1900,60,12,150,20,nitrogen,0.03,gradient,excellent,0.8,0.05
+0.5,0.4,0.1,0.0,0.0,1750,45,8,90,10,argon,0.015,layered,good,1.2,0.15
+0.65,0.25,0.1,0.0,0.0,1850,55,11,135,18,vacuum,0.025,uniform,fair,0.9,0.08
+0.55,0.35,0.1,0.0,0.0,1775,48,9,105,12,argon,0.018,gradient,good,1.1,0.12
+0.8,0.15,0.05,0.0,0.0,2000,70,15,180,25,nitrogen,0.04,uniform,excellent,0.7,0.03
+0.45,0.45,0.1,0.0,0.0,1700,40,7,75,8,argon,0.012,layered,good,1.3,0.18
+0.75,0.2,0.05,0.0,0.0,1950,65,13,165,22,vacuum,0.035,gradient,excellent,0.85,0.06
+0.6,0.3,0.08,0.02,0.0,1825,52,10.5,125,16,argon,0.022,uniform,good,0.95,0.09
+0.52,0.38,0.1,0.0,0.0,1780,46,8.5,95,11,nitrogen,0.016,layered,fair,1.15,0.14

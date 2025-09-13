@@ -1,0 +1,138 @@
+# Docker Compose configuration for Ceramic Armor ML API
+# For local development and testing
+
+version: '3.8'
+
+services:
+  # Main API service
+  ceramic-armor-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: ceramic-armor-ml-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Application Configuration
+      - APP_NAME=Ceramic Armor ML API
+      - APP_VERSION=1.0.0
+      - DEBUG=false
+      - ENVIRONMENT=development
+      
+      # Server Configuration
+      - HOST=0.0.0.0
+      - PORT=8000
+      
+      # API Configuration
+      - API_V1_PREFIX=/api/v1
+      
+      # CORS Configuration (development settings)
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000
+      - CORS_ALLOW_CREDENTIALS=true
+      - CORS_ALLOW_METHODS=GET,POST,PUT,DELETE,OPTIONS
+      - CORS_ALLOW_HEADERS=*
+      
+      # Rate Limiting
+      - RATE_LIMIT_REQUESTS=1000
+      - RATE_LIMIT_WINDOW=3600
+      
+      # Security Configuration
+      - ENABLE_SECURITY_HEADERS=true
+      - ENABLE_INPUT_SANITIZATION=true
+      - MAX_REQUEST_SIZE=10485760
+      
+      # Logging Configuration
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+      
+      # Model Configuration
+      - MODEL_CACHE_SIZE=10
+      - MODEL_PATH=models/
+      
+      # File Upload Configuration
+      - MAX_FILE_SIZE=10485760
+      - ALLOWED_FILE_TYPES=.csv,.xlsx,.json
+    volumes:
+      # Mount models directory
+      - ./models:/app/models:ro
+      # Mount logs directory
+      - ./logs:/app/logs
+      # Mount data directory for uploads
+      - ./data:/app/data
+    env_file:
+      - .env.example
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ceramic-armor-network
+
+  # Development service with hot reload
+  ceramic-armor-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: ceramic-armor-ml-api-dev
+    ports:
+      - "8001:8000"
+    environment:
+      # Development-specific settings
+      - DEBUG=true
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - PORT=8000
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    env_file:
+      - .env.example
+    command: >
+      sh -c "pip install watchdog &&
+             uvicorn src.api.main:app 
+             --host 0.0.0.0 
+             --port 8000 
+             --reload 
+             --reload-dir src 
+             --log-level debug"
+    restart: unless-stopped
+    networks:
+      - ceramic-armor-network
+    profiles:
+      - dev
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: ceramic-armor-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - ceramic-armor-api
+    restart: unless-stopped
+    networks:
+      - ceramic-armor-network
+    profiles:
+      - nginx
+
+networks:
+  ceramic-armor-network:
+    driver: bridge
+
+volumes:
+  models-data:
+    driver: local
+  logs-data:
+    driver: local
